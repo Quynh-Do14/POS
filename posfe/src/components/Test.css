@@ -1,0 +1,15 @@
+td.custom-cell {
+  color: #fff !important;
+  background-color: #4c66be !important;
+  font-weight: 600;
+}
+.custom-table thead th:nth-child(even),
+.custom-table tbody tr:nth-child(odd) th {
+}
+.invalid-cell {
+  background-color: #ffcccc !important; /* Màu nền đỏ nhạt */
+  border: 1px solid #ff0000 !important; /* Viền đỏ */
+}
+.highlight-search {
+  background-color: yellow !important;
+}
