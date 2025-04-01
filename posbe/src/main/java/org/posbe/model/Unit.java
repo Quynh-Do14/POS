@@ -5,16 +5,12 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "suplier")
+@Table(name = "unit")
 @Getter
 @Setter
-public class Suplier {
+public class Unit {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String supplierCode;
-    private Long percent;
     private String name;
-    private String address;
-    private String sdt;
 }

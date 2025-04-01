@@ -16,10 +16,10 @@ public class ProductController {
 
     @GetMapping
     public ResponseEntity<PageResponse> getAllProducts(
+            @RequestParam(defaultValue = "") String search,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    ) {
-        PageResponse response = productService.getAllProducts(page, size);
+            @RequestParam(defaultValue = "10") int size) {
+        PageResponse response = productService.getAllProducts(page, size, search);
         return ResponseEntity.ok(response);
     }
 

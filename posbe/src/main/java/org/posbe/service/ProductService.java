@@ -5,6 +5,7 @@ import org.posbe.dto.PageResponse;
 import org.posbe.dto.ProductDto;
 import org.posbe.dto.dto;
 import org.posbe.model.Product;
+import org.posbe.model.Suplier;
 import org.posbe.repository.ProductRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -19,13 +20,13 @@ import java.util.Optional;
 public class ProductService {
     final ProductRepository productRepository;
 
-//    public Page<Product> getAllProducts(Pageable pageable) {
-//        return productRepository.findAll(pageable);
-//    }
+    // public Page<Product> getAllProducts(Pageable pageable) {
+    // return productRepository.findAll(pageable);
+    // }
 
-    public PageResponse getAllProducts(Integer pageNo,Integer pageSize){
-        Pageable pageable = PageRequest.of(pageNo , pageSize);
-        Page<Product> list = productRepository.findAllProductPage(pageable);
+    public PageResponse getAllProducts(Integer pageNo, Integer pageSize, String search) {
+        Pageable pageable = PageRequest.of(pageNo, pageSize);
+        Page<Product> list = productRepository.findByNameContaining(search, pageable);
         List<dto> rs = list.getContent().stream().map(this::ConvertToDto).toList();
         return PageResponse.builder()
                 .page(pageNo)
@@ -35,6 +36,7 @@ public class ProductService {
                 .build();
 
     }
+
     public dto ConvertToDto(Product product) {
         return dto.builder()
                 .id(product.getId())
@@ -67,4 +69,3 @@ public class ProductService {
         productRepository.deleteById(id);
     }
 }
-

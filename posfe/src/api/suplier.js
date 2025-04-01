@@ -3,21 +3,23 @@ import http from './http'
 const URL = 'suplier'
 
 export const suplierApi = {
-  getAll (page, size) {
-    return http.get(`${URL}?page=${page}&size=${size}`)
+  getAll (page, size, seachName) {
+    return http.get(`${URL}?page=${page}&size=${size}&search=${seachName}`)
   },
-  create (name, address, sdt) {
-    console.log('name, address, sdt', name, address, sdt)
-
+  create (supplierCode, name, percent, address, sdt) {
     return http.post(`${URL}`, {
+      supplierCode: supplierCode,
       name: name,
+      percent: percent,
       address: address,
       sdt: sdt
     })
   },
-  put (id, name, address, sdt) {
+  put (id, supplierCode, name, percent, address, sdt) {
     return http.put(`${URL}/${id}`, {
+      supplierCode: supplierCode,
       name: name,
+      percent: percent,
       address: address,
       sdt: sdt
     })

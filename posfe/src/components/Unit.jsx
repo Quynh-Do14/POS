@@ -7,31 +7,28 @@ import {
 } from '@tanstack/react-query'
 import { FixedSizeList as List } from 'react-window'
 import { useInView } from 'react-intersection-observer'
-import { productApi } from '../api/product'
 import { MdClose } from 'react-icons/md'
 import { useNavigate } from 'react-router-dom'
-import { suplierApi } from '../api/suplier'
+import { unitApi } from '../api/unit'
 
-export const SupplierList = () => {
+export const UnitList = () => {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const [supplierCode, setSupplierCode] = useState('')
   const [name, setName] = useState('')
-  const [address, setAddress] = useState('')
-  const [percent, setPercent] = useState('')
-  const [sdt, setSdt] = useState('')
+  const [unitPrice, setUnitPrice] = useState('')
+  const [unit, setUnit] = useState('')
+  const [salePrice, setSalePrice] = useState('')
   const [editingProduct, setEditingProduct] = useState(null)
   const [openMenu, setOpenMenu] = useState(null)
 
-  const [dataSuplier, setDataSuplier] = useState([])
+  const [dataProduct, setDataProduct] = useState([])
   const [page, setPage] = useState(0)
   const [total, setTotal] = useState(0)
   const [seachName, setSeachName] = useState('')
 
   const getData = async () => {
-    const response = await suplierApi.getAll(page, 10, seachName)
-    console.log(response.data.items)
-    setDataSuplier(response.data.items)
+    const response = await unitApi.getAll(page, 10, seachName)
+    setDataProduct(response.data.items)
     setTotal(response.data.total)
   }
   useEffect(() => {
@@ -42,24 +39,18 @@ export const SupplierList = () => {
     setSeachName(e.target.value)
     setPage(0)
   }
+
   // Xử lý lưu/cập nhật sản phẩm
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (editingProduct) {
-        await suplierApi.put(
-          editingProduct.id,
-          supplierCode,
-          name,
-          percent,
-          address,
-          sdt
-        )
+        await unitApi.put(editingProduct.id, name)
       } else {
-        await suplierApi.create(supplierCode, name, percent, address, sdt)
+        await unitApi.create(name)
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['suplier'])
+      queryClient.invalidateQueries(['products'])
       resetForm()
       getData()
     }
@@ -68,17 +59,16 @@ export const SupplierList = () => {
   const handleEditProduct = product => {
     setEditingProduct(product)
     setName(product.name)
-    setSupplierCode(product.supplierCode)
-    setPercent(product.percent)
-    setAddress(product.address)
-    setSdt(product.sdt)
+    setUnitPrice(product.unitPrice)
+    setUnit(product.unit)
+    setSalePrice(product.salePrice)
   }
 
   // Xử lý xóa sản phẩm
   const deleteMutation = useMutation({
-    mutationFn: async id => await suplierApi.delete(id),
+    mutationFn: async id => await unitApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries(['suplier'])
+      queryClient.invalidateQueries(['products'])
       getData()
     }
   })
@@ -91,11 +81,10 @@ export const SupplierList = () => {
 
   const resetForm = () => {
     setEditingProduct(null)
-    setSupplierCode('')
     setName('')
-    setPercent('')
-    setAddress('')
-    setSdt('')
+    setUnitPrice('')
+    setUnit('')
+    setSalePrice('')
   }
 
   // Render từng item trong danh sách
@@ -105,16 +94,12 @@ export const SupplierList = () => {
 
     return (
       <div
-        style={{
-          height: 100
-        }}
+        style={style}
         className='flex justify-between items-center p-3  last:border-none bg-white hover:bg-gray-50 transition'
       >
-        <div className='flex flex-col gap-1'>
-          <span className='text-gray-800 font-medium'>{product.name}</span>
-          <span className='text-gray-800 font-medium'>{product.address}</span>
-          <span className='text-gray-800 font-medium'>{product.sdt}</span>
-        </div>
+        <span className='text-gray-800 font-medium'>
+          {product.name} - ${product.salePrice}
+        </span>
         <div className='relative'>
           <button
             onClick={() =>
@@ -156,6 +141,7 @@ export const SupplierList = () => {
   // Tổng số sản phẩm đã tải
   // const products = data?.pages.flatMap((page) => page.items) || [];
   // const products = data?.pages.flatMap(page => page.items) || []
+
   return (
     <div
       className='container mx-auto p-5 rounded-lg shadow-2xl bg-white my-5'
@@ -163,7 +149,7 @@ export const SupplierList = () => {
     >
       <div className='flex justify-between items-center pb-2'>
         <h2 className='text-lg font-semibold text-gray-800'>
-          Danh sách nhà cung cấp
+          Danh sách đơn vị tính
         </h2>
         <button
           onClick={() => navigate('/')}
@@ -172,72 +158,23 @@ export const SupplierList = () => {
           Back
         </button>
       </div>
+
       {/* Form nhập sản phẩm */}
-      <div className='grid grid-cols-2 gap-3 mb-4'>
+      <div className='grid grid-cols-1 gap-3 mb-4'>
         <div className='flex flex-col'>
           <label className='text-sm font-medium text-slate-600 mb-1'>
-            Mã nhà cung cấp
+            Tên đơn vị tính
           </label>
           <input
             type='text'
             className='w-full h-10 bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border border-slate-200 rounded px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md'
-            placeholder='Tên nhà cung cấp'
-            value={supplierCode}
-            onChange={e => setSupplierCode(e.target.value)}
-          />
-        </div>
-        <div className='flex flex-col'>
-          <label className='text-sm font-medium text-slate-600 mb-1'>
-            Tên nhà cung cấp
-          </label>
-          <input
-            type='text'
-            className='w-full h-10 bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border border-slate-200 rounded px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md'
-            placeholder='Tên nhà cung cấp'
+            placeholder='Tên đơn vị tính'
             value={name}
             onChange={e => setName(e.target.value)}
           />
         </div>
-
-        <div className='flex flex-col'>
-          <label className='text-sm font-medium text-slate-600 mb-1'>
-            Phần trăm
-          </label>
-          <input
-            max={100}
-            maxLength={2}
-            type='number'
-            className='w-full h-10 bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border border-slate-200 rounded px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md'
-            placeholder='Phần trăm'
-            value={percent}
-            onChange={e => setPercent(e.target.value < 100 && e.target.value)}
-          />
-        </div>
-
-        <div className='flex flex-col'>
-          <label className='text-sm font-medium text-slate-600 mb-1'>
-            Địa chỉ
-          </label>
-          <input
-            type='text'
-            className='w-full h-10 bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border border-slate-200 rounded px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md'
-            placeholder='Địa chỉ'
-            value={address}
-            onChange={e => setAddress(e.target.value)}
-          />
-        </div>
-
-        <div className='flex flex-col'>
-          <label className='text-sm font-medium text-slate-600 mb-1'>SĐT</label>
-          <input
-            type='text'
-            className='w-full h-10 bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border border-slate-200 rounded px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md'
-            placeholder='SĐT'
-            value={sdt}
-            onChange={e => setSdt(e.target.value)}
-          />
-        </div>
       </div>
+
       {/* Nút lưu */}
       <div className='flex items-center'>
         <button
@@ -255,50 +192,40 @@ export const SupplierList = () => {
           </button>
         )}
       </div>
-      {/* Danh sách sản phẩm */}
 
+      {/* Danh sách sản phẩm */}
       <div className='w-full bg-white overflow-auto border border-slate-200 rounded-md shadow-sm mt-3 py-4 px-1'>
         <div className='flex flex-col mb-2'>
           <label className='text-sm font-medium text-slate-600 mb-1'>
-            Tìm kiếm Nhà cung cấp
+            Tìm kiếm hàng
           </label>
           <input
             type='text'
             className='w-full h-10 bg-transparent placeholder:text-slate-400 text-slate-700 text-sm border border-slate-200 rounded px-3 py-2 transition duration-300 ease focus:outline-none focus:border-slate-400 hover:border-slate-400 shadow-sm focus:shadow-md'
-            placeholder='Nhập Tên nhà cung cấp'
+            placeholder='Nhập tên hàng'
             value={seachName}
             onChange={onSearchName}
           />
         </div>
+
         <table className='min-w-full text-sm text-left text-slate-700'>
           <thead className='bg-slate-100 text-xs uppercase text-slate-500'>
             <tr>
-              <th className='px-4 py-3'>Mã</th>
               <th className='px-4 py-3'>Tên</th>
-              <th className='px-4 py-3'>Phần trăm</th>
-              <th className='px-4 py-3'>Địa chỉ</th>
-              <th className='px-4 py-3'>Số điện thoại</th>
               <th className='px-4 py-3 text-right'>Thao tác</th>
             </tr>
           </thead>
           <tbody className='divide-y divide-slate-200'>
-            {dataSuplier.map((product, index) => (
+            {dataProduct.map((product, index) => (
               <tr
                 key={index}
                 className='hover:bg-slate-50 transition duration-150'
                 style={{ height: '64px' }}
               >
                 <td className='px-4 py-2 font-medium text-slate-800'>
-                  {product.supplierCode}
-                </td>
-                <td className='px-4 py-2 font-medium text-slate-800'>
                   {product.name}
                 </td>
-                <td className='px-4 py-2 font-medium text-slate-800'>
-                  {product.percent}%
-                </td>
-                <td className='px-4 py-2'>{product.address}</td>
-                <td className='px-4 py-2'>{product.sdt}</td>
+
                 <td className='px-4 py-2 text-right relative'>
                   <button
                     onClick={() =>

@@ -20,9 +20,9 @@ import lombok.RequiredArgsConstructor;
 public class SuplierService {
     final SuplierRepository suplierRepository;
 
-    public PageResponse getAllSupliers(Integer pageNo, Integer pageSize) {
+    public PageResponse getAllSupliers(Integer pageNo, Integer pageSize, String search) {
         Pageable pageable = PageRequest.of(pageNo, pageSize);
-        Page<Suplier> list = suplierRepository.findAll(pageable);
+        Page<Suplier> list = suplierRepository.findByNameContaining(search, pageable);
         List<SuplierDto> rs = list.getContent().stream().map(this::ConvertToDto).toList();
         return PageResponse.builder()
                 .page(pageNo)
@@ -35,8 +35,10 @@ public class SuplierService {
 
     public SuplierDto ConvertToDto(Suplier suplier) {
         return SuplierDto.builder()
-        .id(suplier.getId())
+                .id(suplier.getId())
+                .supplierCode(suplier.getSupplierCode())
                 .name(suplier.getName())
+                .percent(suplier.getPercent())
                 .address(suplier.getAddress())
                 .sdt(suplier.getSdt())
                 .build();
@@ -52,7 +54,9 @@ public class SuplierService {
 
     public Suplier updateSuplier(Long id, Suplier SuplierDetails) {
         return suplierRepository.findById(id).map(Suplier -> {
+            Suplier.setSupplierCode(SuplierDetails.getSupplierCode());
             Suplier.setName(SuplierDetails.getName());
+            Suplier.setPercent(SuplierDetails.getPercent());
             Suplier.setAddress(SuplierDetails.getAddress());
             Suplier.setSdt(SuplierDetails.getSdt());
             return suplierRepository.save(Suplier);

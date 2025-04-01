@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom'
 import AutoSuggestExample from './SuggestProduct'
 import { suplierApi } from '../api/suplier'
 import { useInfiniteQuery } from '@tanstack/react-query'
+import { unitApi } from '../api/unit'
 
 registerAllModules()
 
@@ -21,9 +22,9 @@ export const Test = () => {
   const nagivate = useNavigate()
   const hotRef = useRef(null)
   const [data, setData] = useState(() => {
-    const initialData = Array.from({ length: 12 }, () => Array(12).fill(''))
+    const initialData = Array.from({ length: 14 }, () => Array(14).fill(''))
     initialData[0] = DEFAULT_HEADERS.concat(
-      Array(12 - DEFAULT_HEADERS.length).fill('')
+      Array(14 - DEFAULT_HEADERS.length).fill('')
     )
     return initialData
   })
@@ -33,19 +34,29 @@ export const Test = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isOpenProduct, setIsOpenProduct] = useState(false)
   const [listSuplier, setSuplier] = useState([])
+  const [listUnit, setListUnit] = useState([])
 
   const closeModal = () => setIsOpenProduct(!isOpenProduct)
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await suplierApi.getAll(0, 100)
+        const response = await suplierApi.getAll(0, 100, '')
         const items = response?.data?.items || []
         setSuplier(items)
       } catch (error) {
         console.error('Lỗi khi lấy danh sách sản phẩm:', error)
       }
     }
-
+    const fetchProducts2 = async () => {
+      try {
+        const response = await unitApi.getAll(0, 100, '')
+        const items = response?.data?.items || []
+        setListUnit(items)
+      } catch (error) {
+        console.error('Lỗi khi lấy danh sách sản phẩm:', error)
+      }
+    }
+    fetchProducts2()
     fetchProducts()
   }, [])
 
@@ -54,8 +65,8 @@ export const Test = () => {
     if (!file) return
     try {
       const response = await checkApi.checkFile(file)
-      console.log(response.data)
       const jsonData = response.data || []
+
       //Chuyển đổi JSON thành mảng 2D
       // Tiêu đề
       let headers = [...DEFAULT_HEADERS]
@@ -79,15 +90,17 @@ export const Test = () => {
             item.sku || '',
             item.name || '',
             item.quantity || '',
-            item.sellPrice || '',
-            item.batchNumber || '',
-            item.expiryDate || '',
+            Number(item.unitPrice) || 0,
             item.unit || '',
-            item.unitPrice || '',
+            Number(item.sellPrice) || 0,
             item.others?.['Ngày'] || getCurrDay(),
+            item.others?.['Mã nhà cung cấp'] || '',
             item.others?.['Nhà cung cấp'] || '',
+            item.others?.['Phần trăm'] || '',
             item.others?.['Địa chỉ'] || '',
-            item.others?.['SĐT'] || ''
+            item.others?.['SĐT'] || '',
+            item.batchNumber || '',
+            item.expiryDate || ''
           ]
 
           // Thêm các trường mới từ 'others' vào dữ liệu
@@ -121,30 +134,31 @@ export const Test = () => {
       )
 
       if (emptyRowIndex !== -1) {
-        console.log('product1', product)
-
         newData[emptyRowIndex][0] = generateItemCode()
         newData[emptyRowIndex][1] = product?.name
-        newData[emptyRowIndex][2] = '' // SL để trống
-        newData[emptyRowIndex][3] = product?.unitPrice
-        newData[emptyRowIndex][6] = product?.unit
-        newData[emptyRowIndex][7] = product?.salePrice
-        newData[emptyRowIndex][8] = getCurrDay()
-        newData[emptyRowIndex][9] = product?.suplier
+        newData[emptyRowIndex][2] = ''
+        newData[emptyRowIndex][3] = ''
+        newData[emptyRowIndex][4] = ''
+        newData[emptyRowIndex][5] = ''
+        newData[emptyRowIndex][6] = getCurrDay()
+        newData[emptyRowIndex][7] = product?.supplierCode
+        newData[emptyRowIndex][8] = product?.suplier
+        newData[emptyRowIndex][9] = product?.percent
         newData[emptyRowIndex][10] = product?.address
         newData[emptyRowIndex][11] = product?.sdt
       } else {
-        console.log('product2', product)
-
         const newRow = Array(newData[0].length).fill('')
+
         newRow[0] = generateItemCode()
         newRow[1] = product?.name
-        newRow[2] = '' // SL để trống
-        newRow[3] = product?.unitPrice
-        newRow[6] = product?.unit
-        newRow[7] = product?.salePrice
-        newRow[8] = getCurrDay()
-        newRow[9] = product?.suplier
+        newRow[2] = ''
+        newRow[3] = ''
+        newRow[4] = ''
+        newRow[5] = ''
+        newRow[6] = getCurrDay()
+        newRow[7] = product?.supplierCode
+        newRow[8] = product?.suplier
+        newRow[9] = product?.percent
         newRow[10] = product?.address
         newRow[11] = product?.sdt
 
@@ -160,9 +174,7 @@ export const Test = () => {
     newData[0] = DEFAULT_HEADERS.concat(Array(10 - headers.length).fill('')) // Đảm bảo độ dài hàng là 20
     setData(newData)
   }
-  useEffect(() => {
-    console.log(data)
-  })
+
   const handleSearch = e => {
     const query = e.target.value
     setSearchQuery(query)
@@ -185,7 +197,6 @@ export const Test = () => {
   const handleExport = () => {
     // const jsonData = data.map((row) => row.map((cell) => cell.value || ""));
     const jsonData = data
-    console.log('excel', jsonData)
     const worksheet = XLSX.utils.aoa_to_sheet(jsonData)
     const workbook = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1')
@@ -222,11 +233,23 @@ export const Test = () => {
     const newData = [...data]
 
     changes.forEach(([row, col, oldValue, newValue]) => {
-      if (newValue && col !== 0 && !newData[row][0]) {
+      console.log('newData[row]', newData[row])
+      console.log('col', col)
+
+      if (
+        newValue &&
+        (col == 5 || col == 6 || col == 7 || col == 5) &&
+        !newData[row][5] &&
+        !newData[row][8]
+      ) {
         newData[row][0] = generateItemCode() // Gán mã hàng hóa nếu cột 0 đang trống
       }
+
+      if (newValue && col !== 0 && !newData[row][5]) {
+        newData[row][5] = newData[row][2] * Number(newData[row][3])
+      }
       if (newValue && col !== 0 && !newData[row][8]) {
-        newData[row][8] = getCurrDay() // Gán ngày/tháng/năm hiện tại vào cột 8
+        newData[row][6] = getCurrDay() // Gán ngày/tháng/năm hiện tại vào cột 8
       }
 
       // tự động thêm row khi hết
@@ -239,27 +262,30 @@ export const Test = () => {
     const suplierNameIndex = data[0]?.indexOf('Nhà cung cấp')
     const addressIndex = data[0]?.indexOf('Địa chỉ')
     const phoneIndex = data[0]?.indexOf('SĐT')
-
+    const supplierCodeIndex = data[0]?.indexOf('Mã nhà cung cấp')
+    const percentIndex = data[0]?.indexOf('Phần trăm')
     changes.forEach(([row, col, oldValue, newValue]) => {
       if (col === suplierNameIndex) {
         const matchedSupplier = listSuplier.find(sup => sup.name === newValue)
         if (matchedSupplier) {
           newData[row][addressIndex] = matchedSupplier.address || ''
           newData[row][phoneIndex] = matchedSupplier.sdt || ''
+          newData[row][percentIndex] = matchedSupplier.percent || ''
+          newData[row][supplierCodeIndex] = matchedSupplier.supplierCode || ''
         }
       }
     })
   }
 
-  const generateItemCode = () => {
-    const now = new Date()
-    const year = now.getFullYear().toString().slice(-2)
-    const month = String(now.getMonth() + 1).padStart(2, '0') // Thêm số 0 nếu cần
-    const day = String(now.getDate()).padStart(2, '0')
-    const hour = String(now.getHours()).padStart(2, '0')
-    const minute = String(now.getMinutes()).padStart(2, '0')
-    const randomNum = Math.floor(1000 + Math.random() * 9000) // 4 số ngẫu nhiên
-    return `${year}${month}${day}${hour}${minute}${randomNum}`
+  const generateItemCode = (supplierCode, price) => {
+    if (supplierCode && price) {
+      const now = new Date()
+      const year = now.getFullYear().toString().slice(-2)
+      const month = String(now.getMonth() + 1).padStart(2, '0') // Thêm số 0 nếu cần
+      const day = String(now.getDate()).padStart(2, '0')
+      return `${supplierCode}${day}${month}${year}${price}`
+    }
+    return null
   }
   const getCurrDay = () => {
     const currentDate = new Date()
@@ -273,41 +299,79 @@ export const Test = () => {
     }/${year}`
   }
 
+  const generateItemCodeAuto = (supplierCode, price) => {
+    if (!supplierCode || !price) return ''
+    const now = new Date()
+    const year = now.getFullYear().toString().slice(-2)
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const day = String(now.getDate()).padStart(2, '0')
+    return `${supplierCode}${day}${month}${year}${price}`
+  }
+
   // Hàm tính lại tổng tiền và thêm dòng "Tổng tiền"
   const updateDataWithTotal = rawData => {
-    const clonedData = rawData.slice() // clone dữ liệu để không ảnh hưởng gốc
+    const clonedData = rawData.slice()
     const headerRow = clonedData[0]
 
     const slIndex = headerRow.indexOf('SL')
-    const priceIndex = headerRow.indexOf('Giá bán')
+    const unitPriceIndex = headerRow.indexOf('Đơn giá')
+    const supplierNameIndex = headerRow.indexOf('Nhà cung cấp')
+    const sellPriceIndex = headerRow.indexOf('Giá bán')
+    const skuIndex =
+      headerRow.indexOf('Mã hàng hóa') !== -1
+        ? headerRow.indexOf('Mã hàng hóa')
+        : 0
 
-    if (slIndex === -1 || priceIndex === -1) return clonedData
+    if (
+      slIndex === -1 ||
+      sellPriceIndex === -1 ||
+      supplierNameIndex === -1 ||
+      unitPriceIndex === -1
+    ) {
+      return clonedData
+    }
 
-    // Xoá dòng "Tổng tiền" cũ nếu có
+    // Xoá dòng tổng nếu có
     const lastRow = clonedData[clonedData.length - 1]
-    if (lastRow && lastRow[priceIndex - 1] === 'Tổng tiền') {
+    if (lastRow && lastRow[sellPriceIndex - 1] === 'Tổng tiền') {
       clonedData.pop()
     }
 
-    // Tính tổng tiền = SL * Giá bán
     let total = 0
+
     for (let i = 1; i < clonedData.length; i++) {
       const row = clonedData[i]
-      const sl = parseFloat(row[slIndex]) || 1
-      const price = parseFloat(row[priceIndex]) || 0
-      if (!isNaN(sl) && !isNaN(price)) {
-        total += sl * price
+      const sl = parseFloat(row[slIndex])
+      const unitPrice = parseFloat(row[unitPriceIndex])
+
+      if (!isNaN(sl) && !isNaN(unitPrice)) {
+        const sellPrice = sl * unitPrice
+        row[sellPriceIndex] = sellPrice
+        total += sellPrice
+
+        // Lấy tên nhà cung cấp và tìm mã tương ứng từ listSuplier
+        const supplierName = row[supplierNameIndex]
+        const matchedSupplier = listSuplier.find(
+          sup => sup.name === supplierName
+        )
+        const supplierCode = matchedSupplier?.supplierCode
+
+        if (!row[skuIndex] && supplierCode && sellPrice) {
+          row[skuIndex] = generateItemCodeAuto(supplierCode, sellPrice)
+        }
       }
     }
 
     // Thêm dòng tổng
     const totalRow = new Array(headerRow.length).fill('')
-    totalRow[priceIndex - 1] = 'Tổng tiền'
-    totalRow[priceIndex] = total
+    totalRow[sellPriceIndex - 1] = 'Tổng tiền'
+    totalRow[sellPriceIndex] = total
 
     clonedData.push(totalRow)
+
     return clonedData
   }
+
   const dvtIndex = data[0]?.indexOf('ĐVT')
   const suplierIndex = data[0]?.indexOf('Nhà cung cấp')
 
@@ -374,6 +438,14 @@ export const Test = () => {
             >
               Danh Sách Nhà Cung Cấp
             </button>
+            <button
+              onClick={() => {
+                nagivate('/unit')
+              }}
+              className='bg-blue-500 text-white p-2 rounded font-medium transition duration-200'
+            >
+              Danh Sách Đơn vị tính
+            </button>
             {/* Button Tải file mẫu */}
             <button
               onClick={formPos365}
@@ -427,29 +499,30 @@ export const Test = () => {
             }
             if (col === dvtIndex) {
               cellProperties.type = 'dropdown'
-              cellProperties.source = [
-                'Cái',
-                'Chiếc',
-                'Bộ',
-                'Hộp',
-                'Thùng',
-                'Kg',
-                'Gam',
-                'Lít',
-                'Chai',
-                'Gói',
-                'Túi',
-                'Cuộn',
-                'Cặp',
-                'Vỉ',
-                'Viên',
-                'Ống',
-                'Bao',
-                'Tấm',
-                'Tờ',
-                'Thẻ',
-                'Miếng'
-              ]
+              cellProperties.source = listUnit.map(item => item.name)
+              // [
+              //   'Cái',
+              //   'Chiếc',
+              //   'Bộ',
+              //   'Hộp',
+              //   'Thùng',
+              //   'Kg',
+              //   'Gam',
+              //   'Lít',
+              //   'Chai',
+              //   'Gói',
+              //   'Túi',
+              //   'Cuộn',
+              //   'Cặp',
+              //   'Vỉ',
+              //   'Viên',
+              //   'Ống',
+              //   'Bao',
+              //   'Tấm',
+              //   'Tờ',
+              //   'Thẻ',
+              //   'Miếng'
+              // ]
               cellProperties.strict = true // Chỉ cho chọn trong danh sách
               cellProperties.allowInvalid = false
             }
@@ -576,7 +649,7 @@ const handleBeforeChange = (changes, source) => {
   if (source === 'edit') {
     const hasError = changes.some(([row, col, oldValue, newValue]) => {
       // Kiểm tra giá trị rỗng ở các cột bắt buộc
-      if ([0, 1, 6].includes(col) && (!newValue || newValue.trim() === '')) {
+      if ([0, 1, 6, 8].includes(col) && (!newValue || newValue.trim() === '')) {
         alert(`Cột ${col + 1} không được để trống!`)
         return true
       }
@@ -595,7 +668,7 @@ const handleBeforeChange = (changes, source) => {
       }
 
       // Kiểm tra Đơn giá & Giá bán - phải là số dương
-      if ([3, 7].includes(col)) {
+      if ([2, 3, 5].includes(col)) {
         const numericValue = Number(newValue)
         if (isNaN(numericValue) || numericValue <= 0) {
           alert(`Cột ${col + 1} phải là số dương!`)
@@ -604,7 +677,7 @@ const handleBeforeChange = (changes, source) => {
       }
 
       // Kiểm tra Hạn sử dụng - định dạng MM/DD/YYYY
-      if (col === 5 && !/^\d{2}\/\d{2}\/\d{4}$/.test(newValue)) {
+      if (col === 6 && !/^\d{2}\/\d{2}\/\d{4}$/.test(newValue)) {
         alert(`Cột ${col + 1} phải có định dạng MM/DD/YYYY!`)
         return true
       }

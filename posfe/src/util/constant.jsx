@@ -3,12 +3,14 @@ export const DEFAULT_HEADERS = [
   'Tên hàng hóa',
   'SL',
   'Đơn giá',
-  'Số Lô',
-  'Hạn sử dụng (12/24/2050)',
   'ĐVT',
   'Giá bán',
   'Ngày',
+  'Mã nhà cung cấp',
   'Nhà cung cấp',
+  'Phần trăm',
   'Địa chỉ',
-  'SĐT'
+  'SĐT',
+  'Số Lô',
+  'Hạn sử dụng (12/24/2050)'
 ]
