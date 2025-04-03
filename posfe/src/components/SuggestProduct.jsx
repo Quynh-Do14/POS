@@ -73,7 +73,7 @@ const AutoSuggestExample = ({ onProductSelect }) => {
   }
 
   return (
-    <div className='w-full max-w-sm p-1  rounded-xl shadow-sm'>
+    <div className='w-full max-w-sm p-1 bg-white  rounded-xl shadow-sm'>
       <Autosuggest
         suggestions={suggestedItems}
         onSuggestionsFetchRequested={onSuggestionsFetchRequested}

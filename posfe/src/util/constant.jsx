@@ -9,8 +9,8 @@ export const DEFAULT_HEADERS = [
   'Mã nhà cung cấp',
   'Nhà cung cấp',
   'Phần trăm',
-  'Địa chỉ',
-  'SĐT',
-  'Số Lô',
-  'Hạn sử dụng (12/24/2050)'
+  // 'Địa chỉ',
+  // 'SĐT',
+  // 'Số Lô',
+  // 'Hạn sử dụng (12/24/2050)'
 ]

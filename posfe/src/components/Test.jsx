@@ -19,12 +19,12 @@ import { unitApi } from '../api/unit'
 registerAllModules()
 
 export const Test = () => {
-  const nagivate = useNavigate()
+  const navigate = useNavigate()
   const hotRef = useRef(null)
   const [data, setData] = useState(() => {
-    const initialData = Array.from({ length: 14 }, () => Array(14).fill(''))
+    const initialData = Array.from({ length: 10 }, () => Array(10).fill(''))
     initialData[0] = DEFAULT_HEADERS.concat(
-      Array(14 - DEFAULT_HEADERS.length).fill('')
+      Array(10 - DEFAULT_HEADERS.length).fill('')
     )
     return initialData
   })
@@ -96,11 +96,11 @@ export const Test = () => {
             item.others?.['Ngày'] || getCurrDay(),
             item.others?.['Mã nhà cung cấp'] || '',
             item.others?.['Nhà cung cấp'] || '',
-            item.others?.['Phần trăm'] || '',
-            item.others?.['Địa chỉ'] || '',
-            item.others?.['SĐT'] || '',
-            item.batchNumber || '',
-            item.expiryDate || ''
+            item.others?.['Phần trăm'] || ''
+            // item.others?.['Địa chỉ'] || '',
+            // item.others?.['SĐT'] || '',
+            // item.batchNumber || '',
+            // item.expiryDate || ''
           ]
 
           // Thêm các trường mới từ 'others' vào dữ liệu
@@ -144,8 +144,8 @@ export const Test = () => {
         newData[emptyRowIndex][7] = product?.supplierCode
         newData[emptyRowIndex][8] = product?.suplier
         newData[emptyRowIndex][9] = product?.percent
-        newData[emptyRowIndex][10] = product?.address
-        newData[emptyRowIndex][11] = product?.sdt
+        // newData[emptyRowIndex][10] = product?.address
+        // newData[emptyRowIndex][11] = product?.sdt
       } else {
         const newRow = Array(newData[0].length).fill('')
 
@@ -159,8 +159,8 @@ export const Test = () => {
         newRow[7] = product?.supplierCode
         newRow[8] = product?.suplier
         newRow[9] = product?.percent
-        newRow[10] = product?.address
-        newRow[11] = product?.sdt
+        // newRow[10] = product?.address
+        // newRow[11] = product?.sdt
 
         newData.push(newRow)
       }
@@ -268,8 +268,8 @@ export const Test = () => {
       if (col === suplierNameIndex) {
         const matchedSupplier = listSuplier.find(sup => sup.name === newValue)
         if (matchedSupplier) {
-          newData[row][addressIndex] = matchedSupplier.address || ''
-          newData[row][phoneIndex] = matchedSupplier.sdt || ''
+          //   newData[row][addressIndex] = matchedSupplier.address || ''
+          //   newData[row][phoneIndex] = matchedSupplier.sdt || ''
           newData[row][percentIndex] = matchedSupplier.percent || ''
           newData[row][supplierCodeIndex] = matchedSupplier.supplierCode || ''
         }
@@ -316,6 +316,7 @@ export const Test = () => {
     const slIndex = headerRow.indexOf('SL')
     const unitPriceIndex = headerRow.indexOf('Đơn giá')
     const supplierNameIndex = headerRow.indexOf('Nhà cung cấp')
+    const percentIndex = headerRow.indexOf('Phần trăm')
     const sellPriceIndex = headerRow.indexOf('Giá bán')
     const skuIndex =
       headerRow.indexOf('Mã hàng hóa') !== -1
@@ -326,7 +327,8 @@ export const Test = () => {
       slIndex === -1 ||
       sellPriceIndex === -1 ||
       supplierNameIndex === -1 ||
-      unitPriceIndex === -1
+      unitPriceIndex === -1 ||
+      percentIndex === -1
     ) {
       return clonedData
     }
@@ -344,16 +346,17 @@ export const Test = () => {
       const sl = parseFloat(row[slIndex])
       const unitPrice = parseFloat(row[unitPriceIndex])
 
-      if (!isNaN(sl) && !isNaN(unitPrice)) {
-        const sellPrice = sl * unitPrice
+      const supplierName = row[supplierNameIndex]
+      const matchedSupplier = listSuplier.find(sup => sup.name === supplierName)
+      const percent = matchedSupplier?.percent
+      if (!isNaN(sl) && !isNaN(unitPrice) && !isNaN(percent)) {
+        const discount = (percent * unitPrice * sl) / 100
+        const sellPrice = sl * unitPrice - discount
         row[sellPriceIndex] = sellPrice
         total += sellPrice
 
         // Lấy tên nhà cung cấp và tìm mã tương ứng từ listSuplier
-        const supplierName = row[supplierNameIndex]
-        const matchedSupplier = listSuplier.find(
-          sup => sup.name === supplierName
-        )
+
         const supplierCode = matchedSupplier?.supplierCode
 
         if (!row[skuIndex] && supplierCode && sellPrice) {
@@ -376,43 +379,47 @@ export const Test = () => {
   const suplierIndex = data[0]?.indexOf('Nhà cung cấp')
 
   return (
-    <div className='p-4'>
-      <h1 className='text-2xl font-bold mb-4'>POS Demo</h1>
-      <div className='flex flex-col gap-2 mb-3'>
-        <div className='flex flex-col justify-between gap-2'>
-          <div className='flex gap-2 '>
+    <div className='p-8 h-[100vh] bg-gradient-to-r from-indigo-100 via-blue-100 to-purple-100'>
+      <h1 className='text-3xl font-semibold mb-6 text-gray-800 text-center'>
+        POS Management
+      </h1>
+
+      <div className='flex flex-col gap-6 mb-8'>
+        <div className='flex flex-col gap-6'>
+          <div className='flex gap-6'>
             <input
               type='text'
-              className='border p-2 mb-2'
+              className='w-1/3 p-3 rounded-md border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white'
               placeholder='Nhập từ khóa tìm kiếm...'
               value={searchQuery}
               onChange={handleSearch}
             />
             <button
               onClick={addRow}
-              className='px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 font-medium transition duration-200'
+              className='px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium transition-all duration-300 '
             >
               Thêm Hàng
             </button>
             <button
               onClick={addColumn}
-              className='px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 font-medium transition duration-200'
+              className='px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium transition-all duration-300'
             >
               Thêm Cột
             </button>
             <AutoSuggestExample onProductSelect={handleProductSelect} />
           </div>
 
-          <div className='flex gap-2'>
+          <div className='flex gap-6'>
             {/* Button Lưu */}
             <button
               onClick={handleExport}
-              className='px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 font-medium transition duration-200'
+              className='px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-all duration-300'
             >
               Xuất File
             </button>
+
             {/* Button Mở file */}
-            <label className='inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white font-medium rounded-md shadow hover:bg-blue-600 cursor-pointer transition duration-200'>
+            <label className='inline-flex items-center gap-3 px-6 py-3 bg-gray-600 text-white font-medium rounded-lg shadow hover:bg-gray-700 cursor-pointer transition-all duration-300'>
               Mở file
               <input
                 type='file'
@@ -423,64 +430,52 @@ export const Test = () => {
             </label>
 
             <button
-              onClick={() => {
-                nagivate('/product')
-              }}
-              className='bg-blue-500 text-white p-2 rounded font-medium transition duration-200'
+              onClick={() => navigate('/product')}
+              className='px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-all duration-300'
             >
               Danh Sách Hàng
             </button>
             <button
-              onClick={() => {
-                nagivate('/suplier')
-              }}
-              className='bg-blue-500 text-white p-2 rounded font-medium transition duration-200'
+              onClick={() => navigate('/suplier')}
+              className='px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium transition-all duration-300'
             >
               Danh Sách Nhà Cung Cấp
             </button>
             <button
-              onClick={() => {
-                nagivate('/unit')
-              }}
-              className='bg-blue-500 text-white p-2 rounded font-medium transition duration-200'
+              onClick={() => navigate('/unit')}
+              className='px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium transition-all duration-300'
             >
               Danh Sách Đơn vị tính
             </button>
+
             {/* Button Tải file mẫu */}
             <button
               onClick={formPos365}
-              className='px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 font-medium transition duration-200'
+              className='px-6 py-3 bg-pink-600 text-white rounded-lg hover:bg-pink-700 font-medium transition-all duration-300'
             >
               Mẫu POS365
             </button>
 
+            {/* Button Tuỳ chọn */}
             <button
               onClick={() => setIsModalOpen(!isModalOpen)}
-              className='bg-blue-500 text-white p-2 rounded font-medium transition duration-200'
+              className='px-6 py-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 font-medium transition-all duration-300'
             >
               Tuỳ chọn
             </button>
-            {/* <button
-              onClick={handleReset}
-              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
-            >
-              Reset
-            </button> */}
           </div>
         </div>
       </div>
 
-      <div className='overflow-auto max-h-[550px] border border-gray-300'>
+      <div className='overflow-auto p-3 border border-gray-300 rounded-md shadow-lg '>
         <HotTable
           ref={hotRef}
           data={data}
           rowHeaders={true}
-          // colHeaders={true}
           width='100%'
           height='auto'
           autoWrapRow={true}
           autoWrapCol={true}
-          // colWidths={120}
           manualColumnResize={true}
           search={true}
           manualRowResize={true}
@@ -491,96 +486,31 @@ export const Test = () => {
           afterChange={handleAfterChange}
           cells={(row, col) => {
             const cellProperties = {}
+
+            // Header row background color (blueish tone)
             if (row === 0) {
               cellProperties.className = 'custom-cell'
             }
+
             if (highlightedRows.has(row)) {
-              cellProperties.className = 'highlight-search'
+              cellProperties.className = 'highlight-search bg-yellow-100'
             }
+
+            // Dropdown for Unit
             if (col === dvtIndex) {
               cellProperties.type = 'dropdown'
               cellProperties.source = listUnit.map(item => item.name)
-              // [
-              //   'Cái',
-              //   'Chiếc',
-              //   'Bộ',
-              //   'Hộp',
-              //   'Thùng',
-              //   'Kg',
-              //   'Gam',
-              //   'Lít',
-              //   'Chai',
-              //   'Gói',
-              //   'Túi',
-              //   'Cuộn',
-              //   'Cặp',
-              //   'Vỉ',
-              //   'Viên',
-              //   'Ống',
-              //   'Bao',
-              //   'Tấm',
-              //   'Tờ',
-              //   'Thẻ',
-              //   'Miếng'
-              // ]
-              cellProperties.strict = true // Chỉ cho chọn trong danh sách
+              cellProperties.strict = true
               cellProperties.allowInvalid = false
             }
+
+            // Dropdown for Supplier
             if (col === suplierIndex) {
               cellProperties.type = 'dropdown'
               cellProperties.source = listSuplier.map(item => item.name)
-              cellProperties.strict = true // Chỉ cho chọn trong danh sách
+              cellProperties.strict = true
               cellProperties.allowInvalid = false
             }
-            // Validation cho cột bắt buộc (cột 0, 1, 6)
-            // if ([1, 6].includes(col)) {
-            //   cellProperties.validator = function (value, callback) {
-            //     if (!value || value.trim() === "") {
-            //       callback(false); // Không hợp lệ
-            //     } else {
-            //       callback(true); // Hợp lệ
-            //     }
-            //   };
-            // }
-            // // Validation cho Số lượng (SL) - cột 2
-            // if (col === 2) {
-            //   cellProperties.validator = function (value, callback) {
-            //     const numericValue = Number(value);
-            //     if (isNaN(numericValue)) {
-            //       callback(false); // Không phải số
-            //     } else if (!Number.isInteger(numericValue)) {
-            //       callback(false); // Không phải số nguyên
-            //     } else if (numericValue <= 0) {
-            //       callback(false); // Không phải số nguyên dương
-            //     } else {
-            //       callback(true); // Hợp lệ
-            //     }
-            //   };
-            // }
-            // // Validation cho Đơn giá & Giá bán - cột 3, 7
-            // if ([3, 7].includes(col)) {
-            //   cellProperties.validator = function (value, callback) {
-            //     const numericValue = Number(value);
-            //     if (isNaN(numericValue)) {
-            //       callback(false); // Không phải số
-            //     } else if (numericValue <= 0) {
-            //       callback(false); // Không phải số dương
-            //     } else {
-            //       callback(true); // Hợp lệ
-            //     }
-            //   };
-            // }
-            // // Validation cho Hạn sử dụng - cột 5
-            // if (col === 5) {
-            //   cellProperties.validator = function (value, callback) {
-            //     const regex = /^\d{2}\/\d{2}\/\d{4}$/; // Định dạng MM/DD/YYYY
-            //     if (!regex.test(value)) {
-            //       callback(false); // Không hợp lệ
-            //     } else {
-            //       callback(true); // Hợp lệ
-            //     }
-            //   };
-            // }
 
             return cellProperties
           }}
@@ -597,6 +527,7 @@ export const Test = () => {
           licenseKey='non-commercial-and-evaluation'
         />
       </div>
+
       {isModalOpen && (
         <ExportModal
           columns={data[0]}
@@ -604,6 +535,7 @@ export const Test = () => {
           onClose={() => setIsModalOpen(false)}
         />
       )}
+
       {isOpenProduct && (
         <ProductList isOpen={isOpenProduct} onClose={closeModal} />
       )}
@@ -648,29 +580,20 @@ const contextMenuSettings = {
 const handleBeforeChange = (changes, source) => {
   if (source === 'edit') {
     const hasError = changes.some(([row, col, oldValue, newValue]) => {
+      if (row === 0) {
+        alert('Hàng đầu tiên không thể thay đổi!')
+        return true // Ngừng thay đổi
+      }
       // Kiểm tra giá trị rỗng ở các cột bắt buộc
       if ([0, 1, 6, 8].includes(col) && (!newValue || newValue.trim() === '')) {
         alert(`Cột ${col + 1} không được để trống!`)
         return true
       }
 
-      // Kiểm tra Số lượng (SL) - phải là số nguyên dương
-      if (col === 2) {
-        const numericValue = Number(newValue)
-        if (
-          isNaN(numericValue) ||
-          !Number.isInteger(numericValue) ||
-          numericValue <= 0
-        ) {
-          alert(`Cột ${col + 1} phải là số nguyên dương!`)
-          return true
-        }
-      }
-
-      // Kiểm tra Đơn giá & Giá bán - phải là số dương
+      // Kiểm tra Đơn giá & Giá bán - phải là số dương nhưng không yêu cầu phải nhập
       if ([2, 3, 5].includes(col)) {
         const numericValue = Number(newValue)
-        if (isNaN(numericValue) || numericValue <= 0) {
+        if (newValue && (isNaN(numericValue) || numericValue <= 0)) {
           alert(`Cột ${col + 1} phải là số dương!`)
           return true
         }
