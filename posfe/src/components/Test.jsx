@@ -15,6 +15,7 @@ import AutoSuggestExample from './SuggestProduct'
 import { suplierApi } from '../api/suplier'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { unitApi } from '../api/unit'
+import { productApi } from '../api/product'
 
 registerAllModules()
 
@@ -35,6 +36,7 @@ export const Test = () => {
   const [isOpenProduct, setIsOpenProduct] = useState(false)
   const [listSuplier, setSuplier] = useState([])
   const [listUnit, setListUnit] = useState([])
+  const [listProduct, setListProduct] = useState([])
 
   const closeModal = () => setIsOpenProduct(!isOpenProduct)
   useEffect(() => {
@@ -56,6 +58,16 @@ export const Test = () => {
         console.error('Lỗi khi lấy danh sách sản phẩm:', error)
       }
     }
+    const fetchProducts3 = async () => {
+      try {
+        const response = await productApi.getAll(0, 100, '')
+        const items = response?.data?.items || []
+        setListProduct(items)
+      } catch (error) {
+        console.error('Lỗi khi lấy danh sách sản phẩm:', error)
+      }
+    }
+    fetchProducts3()
     fetchProducts2()
     fetchProducts()
   }, [])
@@ -245,6 +257,11 @@ export const Test = () => {
         newData[row][0] = generateItemCode() // Gán mã hàng hóa nếu cột 0 đang trống
       }
 
+      // ✅ Nếu sửa cột Số lượng thì nhân lên 1000
+      if (col === 3 && !isNaN(newValue)) {
+        newData[row][col] = parseFloat(newValue) * 1000 || 0
+      }
+
       if (newValue && col !== 0 && !newData[row][5]) {
         newData[row][5] = newData[row][2] * Number(newData[row][3])
       }
@@ -351,7 +368,7 @@ export const Test = () => {
       const percent = matchedSupplier?.percent
       if (!isNaN(sl) && !isNaN(unitPrice) && !isNaN(percent)) {
         const discount = (percent * unitPrice * sl) / 100
-        const sellPrice = sl * unitPrice - discount
+        const sellPrice = sl * unitPrice + discount
         row[sellPriceIndex] = sellPrice
         total += sellPrice
 
@@ -375,6 +392,7 @@ export const Test = () => {
     return clonedData
   }
 
+  const productNameIndex = data[0]?.indexOf('Tên hàng hóa')
   const dvtIndex = data[0]?.indexOf('ĐVT')
   const suplierIndex = data[0]?.indexOf('Nhà cung cấp')
 
@@ -495,6 +513,12 @@ export const Test = () => {
             if (highlightedRows.has(row)) {
               cellProperties.className = 'highlight-search bg-yellow-100'
             }
+            if (col === productNameIndex) {
+              cellProperties.type = 'dropdown'
+              cellProperties.source = listProduct.map(item => item.name)
+              cellProperties.strict = true
+              cellProperties.allowInvalid = false
+            }
 
             // Dropdown for Unit
             if (col === dvtIndex) {
@@ -580,12 +604,8 @@ const contextMenuSettings = {
 const handleBeforeChange = (changes, source) => {
   if (source === 'edit') {
     const hasError = changes.some(([row, col, oldValue, newValue]) => {
-      if (row === 0) {
-        alert('Hàng đầu tiên không thể thay đổi!')
-        return true // Ngừng thay đổi
-      }
       // Kiểm tra giá trị rỗng ở các cột bắt buộc
-      if ([0, 1, 6, 8].includes(col) && (!newValue || newValue.trim() === '')) {
+      if ([1, 6, 8].includes(col) && (!newValue || newValue.trim() === '')) {
         alert(`Cột ${col + 1} không được để trống!`)
         return true
       }
