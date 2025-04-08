@@ -127,8 +127,19 @@ export const Test = () => {
           return baseData
         })
       ]
-      updateDataWithTotal(newData)
-      setData([...newData])
+      let updatedData = updateDataWithTotal(newData)
+
+      // ✅ Xoá dòng tổng nếu có (đã xử lý trong updateDataWithTotal)
+      updatedData = updatedData.filter(row => row[headers.indexOf('Giá bán') - 1] !== 'Tổng tiền')
+      
+      // ✅ Thêm 3 dòng trống
+      const emptyRows = Array.from({ length: 3 }, () => new Array(headers.length).fill(''))
+      updatedData = [...updatedData, ...emptyRows]
+      
+      // ✅ Gọi lại để thêm dòng "Tổng tiền"
+      updatedData = updateDataWithTotal(updatedData)
+      
+      setData(updatedData)
       setHeaders([...headers])
     } catch (error) {
       console.log('Upload failed: ' + error.response?.data || 'Server error')
@@ -325,9 +336,7 @@ export const Test = () => {
 
   // Hàm tính lại tổng tiền và thêm dòng "Tổng tiền"
   const updateDataWithTotal = rawData => {
-    const clonedData = rawData.slice()
-    const headerRow = clonedData[0]
-
+    const headerRow = rawData[0]
     const slIndex = headerRow.indexOf('SL')
     const unitPriceIndex = headerRow.indexOf('Đơn giá')
     const supplierNameIndex = headerRow.indexOf('Nhà cung cấp')
@@ -339,56 +348,54 @@ export const Test = () => {
         : 0
 
     if (
-      slIndex === -1 ||
-      sellPriceIndex === -1 ||
-      supplierNameIndex === -1 ||
-      unitPriceIndex === -1 ||
-      percentIndex === -1
+      [
+        slIndex,
+        unitPriceIndex,
+        supplierNameIndex,
+        percentIndex,
+        sellPriceIndex
+      ].includes(-1)
     ) {
-      return clonedData
+      return rawData
     }
 
-    // Xoá dòng tổng nếu có
-    const lastRow = clonedData[clonedData.length - 1]
-    if (lastRow && lastRow[sellPriceIndex - 1] === 'Tổng tiền') {
-      clonedData.pop()
-    }
+    // Xoá dòng tổng tiền cũ (nếu có)
+    const cleanedData = rawData.filter(
+      row => row[sellPriceIndex - 1] !== 'Tổng tiền'
+    )
 
     let total = 0
 
-    for (let i = 1; i < clonedData.length; i++) {
-      const row = clonedData[i]
+    const updatedData = cleanedData.map((row, idx) => {
+      if (idx === 0) return row // bỏ qua header
+
       const sl = parseFloat(row[slIndex])
       const unitPrice = parseFloat(row[unitPriceIndex])
-
       const supplierName = row[supplierNameIndex]
       const matchedSupplier = listSuplier.find(sup => sup.name === supplierName)
-      const percent = matchedSupplier?.percent
-      if (!isNaN(sl) && !isNaN(unitPrice) && !isNaN(percent)) {
+      const percent = matchedSupplier?.percent || 0
+
+      if (!isNaN(sl) && !isNaN(unitPrice)) {
         const discount = (percent * unitPrice * sl) / 100
         const sellPrice = sl * unitPrice + discount
         row[sellPriceIndex] = sellPrice
         total += sellPrice
-
-        // Lấy tên nhà cung cấp và tìm mã tương ứng từ listSuplier
 
         const supplierCode = matchedSupplier?.supplierCode
         if (supplierCode && sellPrice) {
           row[skuIndex] = generateItemCodeAuto(supplierCode, sellPrice)
         }
       }
-    }
 
-    // Thêm dòng tổng
+      return row
+    })
+
     const totalRow = new Array(headerRow.length).fill('')
     totalRow[sellPriceIndex - 1] = 'Tổng tiền'
     totalRow[sellPriceIndex] = total
 
-    clonedData.push(totalRow)
-
-    return clonedData
+    return [...updatedData, totalRow]
   }
-
   const productNameIndex = data[0]?.indexOf('Tên hàng hóa')
   const dvtIndex = data[0]?.indexOf('ĐVT')
   const suplierIndex = data[0]?.indexOf('Nhà cung cấp')
