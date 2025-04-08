@@ -89,12 +89,10 @@ public class ExcelService {
 
         product.setSku(getCellValue(row.getCell(0))); // Mã hàng hóa
         product.setName(getCellValue(row.getCell(1))); // Tên hàng hóa
-        product.setQuantity((int) getNumericCellValue(row.getCell(2), rowIndex, "SL")); // Số lượng
-        product.setUnitPrice(BigDecimal.valueOf(getNumericCellValue(row.getCell(3), rowIndex, "Đơn giá"))); // Đơn giá
-        product.setUnit(getCellValue(row.getCell(4))); // Đơn vị tính (ĐVT)
-        product.setSellPrice(BigDecimal.valueOf(getNumericCellValue(row.getCell(5), rowIndex, "Giá bán"))); // Giá bán
-        product.setBatchNumber(getCellValue(row.getCell(12))); // Số Lô
-        product.setExpiryDate(parseDateCell(row.getCell(13), rowIndex)); // Hạn sử dụng
+        product.setQuantity((int) getNumericCellValue(row.getCell(5), rowIndex, "SL")); // Số lượng
+        product.setUnitPrice(BigDecimal.valueOf(getNumericCellValue(row.getCell(6), rowIndex, "Đơn giá"))); // Đơn giá
+        product.setUnit(getCellValue(row.getCell(7))); // Đơn vị tính (ĐVT)
+        product.setSellPrice(BigDecimal.valueOf(getNumericCellValue(row.getCell(8), rowIndex, "Giá bán"))); // Giá bá
         // Lưu các cột bổ sung
         Map<String, Object> extraFields = new HashMap<>();
         for (int colIndex = 0; colIndex < row.getLastCellNum(); colIndex++) {
@@ -137,7 +135,7 @@ public class ExcelService {
     private double getNumericCellValue(Cell cell, int rowIndex, String columnName) {
         if (cell == null) {
             // throw new IllegalArgumentException(
-            //         "Lỗi ở dòng " + (rowIndex) + ": " + columnName + " không được để trống.");
+            // "Lỗi ở dòng " + (rowIndex) + ": " + columnName + " không được để trống.");
             return 0.0;
         }
 
@@ -148,7 +146,7 @@ public class ExcelService {
                 return Double.parseDouble(cell.getStringCellValue().trim());
             } catch (NumberFormatException e) {
                 // throw new IllegalArgumentException(
-                //         "Lỗi ở dòng " + (rowIndex) + ": " + columnName + " phải là số hợp lệ.")
+                // "Lỗi ở dòng " + (rowIndex) + ": " + columnName + " phải là số hợp lệ.")
                 return 0.0;
             }
         } else {
@@ -199,10 +197,12 @@ public class ExcelService {
 
     private void validateProduct(ProductDto product, int rowIndex) {
         // if (product.getSku().isEmpty()) {
-        //     throw new IllegalArgumentException("Lỗi dòng " + (rowIndex + 1) + ": Mã hàng hóa không được để trống.");
+        // throw new IllegalArgumentException("Lỗi dòng " + (rowIndex + 1) + ": Mã hàng
+        // hóa không được để trống.");
         // }
         // if (product.getName().isEmpty()) {
-        //     throw new IllegalArgumentException("Lỗi dòng " + (rowIndex + 1) + ": Tên hàng hóa không được để trống.");
+        // throw new IllegalArgumentException("Lỗi dòng " + (rowIndex + 1) + ": Tên hàng
+        // hóa không được để trống.");
         // }
         if (product.getQuantity() < 0) {
             throw new IllegalArgumentException("Lỗi dòng " + (rowIndex + 1) + ": Số lượng không thể âm.");

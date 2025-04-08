@@ -101,14 +101,15 @@ export const Test = () => {
           const baseData = [
             item.sku || '',
             item.name || '',
+            item.others?.['Mã nhà cung cấp'] || '',
+            item.others?.['Nhà cung cấp'] || '',
+            item.others?.['Phần trăm'] || '',
             item.quantity || '',
             Number(item.unitPrice) || 0,
             item.unit || '',
             Number(item.sellPrice) || 0,
-            item.others?.['Ngày'] || getCurrDay(),
-            item.others?.['Mã nhà cung cấp'] || '',
-            item.others?.['Nhà cung cấp'] || '',
-            item.others?.['Phần trăm'] || ''
+            item.others?.['Ngày'] || getCurrDay()
+
             // item.others?.['Địa chỉ'] || '',
             // item.others?.['SĐT'] || '',
             // item.batchNumber || '',
@@ -148,14 +149,14 @@ export const Test = () => {
       if (emptyRowIndex !== -1) {
         newData[emptyRowIndex][0] = generateItemCode()
         newData[emptyRowIndex][1] = product?.name
-        newData[emptyRowIndex][2] = ''
-        newData[emptyRowIndex][3] = ''
-        newData[emptyRowIndex][4] = ''
+        newData[emptyRowIndex][2] = product?.supplierCode
+        newData[emptyRowIndex][3] = product?.suplier
+        newData[emptyRowIndex][4] = product?.percent
         newData[emptyRowIndex][5] = ''
-        newData[emptyRowIndex][6] = getCurrDay()
-        newData[emptyRowIndex][7] = product?.supplierCode
-        newData[emptyRowIndex][8] = product?.suplier
-        newData[emptyRowIndex][9] = product?.percent
+        newData[emptyRowIndex][6] = ''
+        newData[emptyRowIndex][7] = ''
+        newData[emptyRowIndex][8] = ''
+        newData[emptyRowIndex][9] = getCurrDay()
         // newData[emptyRowIndex][10] = product?.address
         // newData[emptyRowIndex][11] = product?.sdt
       } else {
@@ -163,14 +164,14 @@ export const Test = () => {
 
         newRow[0] = generateItemCode()
         newRow[1] = product?.name
-        newRow[2] = ''
-        newRow[3] = ''
-        newRow[4] = ''
+        newRow[2] = product?.supplierCode
+        newRow[3] = product?.suplier
+        newRow[4] = product?.percent
         newRow[5] = ''
-        newRow[6] = getCurrDay()
-        newRow[7] = product?.supplierCode
-        newRow[8] = product?.suplier
-        newRow[9] = product?.percent
+        newRow[6] = ''
+        newRow[7] = ''
+        newRow[8] = ''
+        newRow[9] = getCurrDay()
         // newRow[10] = product?.address
         // newRow[11] = product?.sdt
 
@@ -245,28 +246,25 @@ export const Test = () => {
     const newData = [...data]
 
     changes.forEach(([row, col, oldValue, newValue]) => {
-      console.log('newData[row]', newData[row])
-      console.log('col', col)
-
       if (
         newValue &&
-        (col == 5 || col == 6 || col == 7 || col == 5) &&
+        (col == 5 || col == 6 || col == 7) &&
         !newData[row][5] &&
-        !newData[row][8]
+        !newData[row][6]
       ) {
         newData[row][0] = generateItemCode() // Gán mã hàng hóa nếu cột 0 đang trống
       }
 
       // ✅ Nếu sửa cột Số lượng thì nhân lên 1000
-      if (col === 3 && !isNaN(newValue)) {
+      if (col === 6 && !isNaN(newValue)) {
         newData[row][col] = parseFloat(newValue) * 1000 || 0
       }
 
-      if (newValue && col !== 0 && !newData[row][5]) {
-        newData[row][5] = newData[row][2] * Number(newData[row][3])
-      }
       if (newValue && col !== 0 && !newData[row][8]) {
-        newData[row][6] = getCurrDay() // Gán ngày/tháng/năm hiện tại vào cột 8
+        newData[row][8] = newData[row][5] * Number(newData[row][6])
+      }
+      if (newValue && col !== 0) {
+        newData[row][9] = getCurrDay() // Gán ngày/tháng/năm hiện tại vào cột 8
       }
 
       // tự động thêm row khi hết
@@ -274,7 +272,6 @@ export const Test = () => {
         newData.push(Array(newData[0].length).fill('')) // Thêm hàng mới rỗng
       }
     })
-    setData(updateDataWithTotal(newData))
 
     const suplierNameIndex = data[0]?.indexOf('Nhà cung cấp')
     const addressIndex = data[0]?.indexOf('Địa chỉ')
@@ -292,6 +289,7 @@ export const Test = () => {
         }
       }
     })
+    setData(updateDataWithTotal(newData))
   }
 
   const generateItemCode = (supplierCode, price) => {
@@ -375,8 +373,7 @@ export const Test = () => {
         // Lấy tên nhà cung cấp và tìm mã tương ứng từ listSuplier
 
         const supplierCode = matchedSupplier?.supplierCode
-
-        if (!row[skuIndex] && supplierCode && sellPrice) {
+        if (supplierCode && sellPrice) {
           row[skuIndex] = generateItemCodeAuto(supplierCode, sellPrice)
         }
       }
@@ -605,13 +602,13 @@ const handleBeforeChange = (changes, source) => {
   if (source === 'edit') {
     const hasError = changes.some(([row, col, oldValue, newValue]) => {
       // Kiểm tra giá trị rỗng ở các cột bắt buộc
-      if ([1, 6, 8].includes(col) && (!newValue || newValue.trim() === '')) {
+      if ([1, 3, 9].includes(col) && (!newValue || newValue.trim() === '')) {
         alert(`Cột ${col + 1} không được để trống!`)
         return true
       }
 
       // Kiểm tra Đơn giá & Giá bán - phải là số dương nhưng không yêu cầu phải nhập
-      if ([2, 3, 5].includes(col)) {
+      if ([5, 6, 8].includes(col)) {
         const numericValue = Number(newValue)
         if (newValue && (isNaN(numericValue) || numericValue <= 0)) {
           alert(`Cột ${col + 1} phải là số dương!`)
@@ -620,7 +617,7 @@ const handleBeforeChange = (changes, source) => {
       }
 
       // Kiểm tra Hạn sử dụng - định dạng MM/DD/YYYY
-      if (col === 6 && !/^\d{2}\/\d{2}\/\d{4}$/.test(newValue)) {
+      if (col === 9 && !/^\d{2}\/\d{2}\/\d{4}$/.test(newValue)) {
         alert(`Cột ${col + 1} phải có định dạng MM/DD/YYYY!`)
         return true
       }
