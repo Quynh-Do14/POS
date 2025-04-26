@@ -49,6 +49,9 @@ public class SuplierService {
     }
 
     public Suplier createSuplier(Suplier Suplier) {
+        if (suplierRepository.existsBySupplierCode(Suplier.getSupplierCode())) {
+            throw new RuntimeException("Mã nhà cung cấp '" + Suplier.getSupplierCode() + "' đã tồn tại");
+        }
         return suplierRepository.save(Suplier);
     }
 

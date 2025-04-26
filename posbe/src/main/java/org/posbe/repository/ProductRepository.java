@@ -1,5 +1,7 @@
 package org.posbe.repository;
 
+import java.util.List;
+
 import org.posbe.model.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,5 +15,4 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Page<Product> findAllProductPage(Pageable pageable);
 
     Page<Product> findByNameContaining(String name, Pageable pageable);
-
 }

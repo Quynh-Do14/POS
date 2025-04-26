@@ -186,7 +186,8 @@ export const SupplierList = () => {
             label: 'Mã nhà cung cấp',
             placeholder: 'Mã nhà cung cấp',
             value: supplierCode,
-            set: setSupplierCode
+            set: val => setSupplierCode(val > 0 && val < 999 && val),
+            type: 'number'
           },
           {
             label: 'Tên nhà cung cấp',
@@ -198,7 +199,7 @@ export const SupplierList = () => {
             label: 'Phần trăm',
             placeholder: 'Phần trăm',
             value: percent,
-            set: val => setPercent(val < 100 && val),
+            set: val => setPercent(val > 0 && val < 100 && val),
             type: 'number'
           },
           {

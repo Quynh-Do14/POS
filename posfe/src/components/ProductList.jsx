@@ -228,6 +228,7 @@ export const ProductList = () => {
           <table className='min-w-full text-sm text-left text-slate-700'>
             <thead className='bg-slate-100 text-xs font-semibold text-slate-500'>
               <tr>
+                <th className='px-4 py-3'>Mã hàng hóa</th>
                 <th className='px-4 py-3'>Tên</th>
                 <th className='px-4 py-3 text-right'>Thao tác</th>
               </tr>
@@ -239,6 +240,9 @@ export const ProductList = () => {
                   className='hover:bg-slate-50 transition duration-150'
                   style={{ height: '64px' }}
                 >
+                  <td className='px-4 py-2 font-medium text-slate-800'>
+                    {product.code}
+                  </td>
                   <td className='px-4 py-2 font-medium text-slate-800'>
                     {product.name}
                   </td>

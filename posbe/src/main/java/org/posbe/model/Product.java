@@ -11,7 +11,9 @@ import lombok.Setter;
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(unique = true) 
     private Long id;
+    private String code;
     private String name;
     private Double unitPrice; // đơn giá
     private String unit;

@@ -13,7 +13,6 @@ import { ProductList } from './ProductList'
 import { useNavigate } from 'react-router-dom'
 import AutoSuggestExample from './SuggestProduct'
 import { suplierApi } from '../api/suplier'
-import { useInfiniteQuery } from '@tanstack/react-query'
 import { unitApi } from '../api/unit'
 import { productApi } from '../api/product'
 
@@ -130,15 +129,19 @@ export const Test = () => {
       let updatedData = updateDataWithTotal(newData)
 
       // ✅ Xoá dòng tổng nếu có (đã xử lý trong updateDataWithTotal)
-      updatedData = updatedData.filter(row => row[headers.indexOf('Giá bán') - 1] !== 'Tổng tiền')
-      
+      updatedData = updatedData.filter(
+        row => row[headers.indexOf('Đơn giá') - 1] !== 'Tổng tiền'
+      )
+
       // ✅ Thêm 3 dòng trống
-      const emptyRows = Array.from({ length: 3 }, () => new Array(headers.length).fill(''))
+      const emptyRows = Array.from({ length: 3 }, () =>
+        new Array(headers.length).fill('')
+      )
       updatedData = [...updatedData, ...emptyRows]
-      
+
       // ✅ Gọi lại để thêm dòng "Tổng tiền"
       updatedData = updateDataWithTotal(updatedData)
-      
+
       setData(updatedData)
       setHeaders([...headers])
     } catch (error) {
@@ -218,22 +221,77 @@ export const Test = () => {
   //   setData(Array.from({ length: 10 }, () => Array(10).fill("")));
   // };
   // Xuất dữ liệu từ bảng tính ra file Excel
+
+  const getCurrDay = () => {
+    const currentDate = new Date()
+    const day = currentDate.getDate()
+    const month = currentDate.getMonth() + 1 // Tháng bắt đầu từ 0 nên cần +1
+    const year = currentDate.getFullYear()
+
+    // Định dạng ngày/tháng/năm theo ý muốn, ví dụ: "dd/mm/yyyy"
+    return `${day < 10 ? '0' + day : day}/${
+      month < 10 ? '0' + month : month
+    }/${year}`
+  }
+
   const handleExport = () => {
     // const jsonData = data.map((row) => row.map((cell) => cell.value || ""));
-    const jsonData = data
-    const worksheet = XLSX.utils.aoa_to_sheet(jsonData)
+
+    //Logic cũ
+    // const jsonData = data
+    // const worksheet = XLSX.utils.aoa_to_sheet(jsonData)
+    // //Logic cũ
+
+    const newRow1 = Array(data.length)
+      .fill()
+      .map(() => Array(data.length).fill(''))
+    data.map((item, index) => {
+      if (item?.length && newRow1[index]?.length) {
+        newRow1[index][0] = item[0]
+        newRow1[index][1] = item[1]
+        newRow1[index][2] = item[5]
+        newRow1[index][3] = item[6]
+        newRow1[index][4] = item[7]
+        newRow1[index][5] = item[8]
+        newRow1[index][6] = item[9]
+        newRow1[index][7] = item[2]
+        newRow1[index][8] = item[3]
+        newRow1[index][9] = item[4]
+        return newRow1
+      } else null
+    })
+
+    const worksheet = XLSX.utils.aoa_to_sheet(newRow1)
     const workbook = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1')
-    XLSX.writeFile(workbook, 'pos365.xlsx')
+    XLSX.writeFile(workbook, `pos365-${getCurrDay()}.xlsx`)
   }
   // Xuất dữ liệu từ bảng tính ra file Excel với tuỳ chọn file
   const handleExportDemo = selectedColumns => {
-    const columnIndexes = selectedColumns.map(col => data[0].indexOf(col))
-    const filteredData = data.map(row => columnIndexes.map(index => row[index]))
-    const worksheet = XLSX.utils.aoa_to_sheet(filteredData)
+    //Logic cũ
+    // const columnIndexes = selectedColumns.map(col => data[0].indexOf(col))
+    // const filteredData = data.map(row => columnIndexes.map(index => row[index]))
+    //Logic cũ
+
+    const newRow1 = Array(data.length)
+      .fill()
+      .map(() => Array(data.length).fill(''))
+    data.map(row => {
+      newRow1[0][0] = selectedColumns[0]
+      newRow1[0][1] = selectedColumns[1]
+      newRow1[0][2] = selectedColumns[5]
+      newRow1[0][3] = selectedColumns[6]
+      newRow1[0][4] = selectedColumns[7]
+      newRow1[0][5] = selectedColumns[8]
+      newRow1[0][6] = selectedColumns[9]
+      newRow1[0][7] = selectedColumns[2]
+      newRow1[0][8] = selectedColumns[3]
+      newRow1[0][9] = selectedColumns[4]
+    })
+    const worksheet = XLSX.utils.aoa_to_sheet(newRow1)
     const workbook = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1')
-    XLSX.writeFile(workbook, 'pos365.xlsx')
+    XLSX.writeFile(workbook, `pos365-${getCurrDay()}.xlsx`)
   }
 
   const addRow = () => {
@@ -268,7 +326,7 @@ export const Test = () => {
 
       // ✅ Nếu sửa cột Số lượng thì nhân lên 1000
       if (col === 6 && !isNaN(newValue)) {
-        newData[row][col] = parseFloat(newValue) * 1000 || 0
+        newData[row][col] = parseFloat(newValue) || 0
       }
 
       if (newValue && col !== 0 && !newData[row][8]) {
@@ -285,8 +343,6 @@ export const Test = () => {
     })
 
     const suplierNameIndex = data[0]?.indexOf('Nhà cung cấp')
-    const addressIndex = data[0]?.indexOf('Địa chỉ')
-    const phoneIndex = data[0]?.indexOf('SĐT')
     const supplierCodeIndex = data[0]?.indexOf('Mã nhà cung cấp')
     const percentIndex = data[0]?.indexOf('Phần trăm')
     changes.forEach(([row, col, oldValue, newValue]) => {
@@ -303,40 +359,46 @@ export const Test = () => {
     setData(updateDataWithTotal(newData))
   }
 
-  const generateItemCode = (supplierCode, price) => {
+  const generateItemCode = (percent, productCode, supplierCode, price) => {
     if (supplierCode && price) {
       const now = new Date()
       const year = now.getFullYear().toString().slice(-2)
       const month = String(now.getMonth() + 1).padStart(2, '0') // Thêm số 0 nếu cần
       const day = String(now.getDate()).padStart(2, '0')
-      return `${supplierCode}${day}${month}${year}${price}`
+      const percentResult =
+        percent >= 1 && percent <= 9
+          ? `00${percent}`
+          : percent >= 10 && percent <= 99
+          ? `0${percent}`
+          : percent >= 100 && percent <= 999
+          ? `${percent}`
+          : null
+      return `${percentResult}${price}${productCode}${supplierCode}${day}${month}${year}`
     }
     return null
   }
-  const getCurrDay = () => {
-    const currentDate = new Date()
-    const day = currentDate.getDate()
-    const month = currentDate.getMonth() + 1 // Tháng bắt đầu từ 0 nên cần +1
-    const year = currentDate.getFullYear()
 
-    // Định dạng ngày/tháng/năm theo ý muốn, ví dụ: "dd/mm/yyyy"
-    return `${day < 10 ? '0' + day : day}/${
-      month < 10 ? '0' + month : month
-    }/${year}`
-  }
-
-  const generateItemCodeAuto = (supplierCode, price) => {
+  const generateItemCodeAuto = (percent, productCode, supplierCode, price) => {
     if (!supplierCode || !price) return ''
     const now = new Date()
     const year = now.getFullYear().toString().slice(-2)
     const month = String(now.getMonth() + 1).padStart(2, '0')
     const day = String(now.getDate()).padStart(2, '0')
-    return `${supplierCode}${day}${month}${year}${price}`
+    const percentResult =
+      percent >= 1 && percent <= 9
+        ? `00${percent}`
+        : percent >= 10 && percent <= 99
+        ? `0${percent}`
+        : percent >= 100 && percent <= 999
+        ? `${percent}`
+        : null
+    return `${percentResult}${price}${productCode}${supplierCode}${day}${month}${year}`
   }
 
   // Hàm tính lại tổng tiền và thêm dòng "Tổng tiền"
   const updateDataWithTotal = rawData => {
     const headerRow = rawData[0]
+    const productNameIndex = headerRow.indexOf('Tên hàng hóa')
     const slIndex = headerRow.indexOf('SL')
     const unitPriceIndex = headerRow.indexOf('Đơn giá')
     const supplierNameIndex = headerRow.indexOf('Nhà cung cấp')
@@ -361,7 +423,7 @@ export const Test = () => {
 
     // Xoá dòng tổng tiền cũ (nếu có)
     const cleanedData = rawData.filter(
-      row => row[sellPriceIndex - 1] !== 'Tổng tiền'
+      row => row[unitPriceIndex - 1] !== 'Tổng tiền'
     )
 
     let total = 0
@@ -372,18 +434,26 @@ export const Test = () => {
       const sl = parseFloat(row[slIndex])
       const unitPrice = parseFloat(row[unitPriceIndex])
       const supplierName = row[supplierNameIndex]
+      const productName = row[productNameIndex]
+      const matchedProduct = listProduct.find(sup => sup.name === productName)
       const matchedSupplier = listSuplier.find(sup => sup.name === supplierName)
       const percent = matchedSupplier?.percent || 0
+      const supplierCode = matchedSupplier?.supplierCode
+      const productCode = matchedProduct?.code
 
       if (!isNaN(sl) && !isNaN(unitPrice)) {
-        const discount = (percent * unitPrice * sl) / 100
-        const sellPrice = sl * unitPrice + discount
+        const discount = (percent * unitPrice * 1000 * sl) / 100
+        const sellPrice = sl * unitPrice * 1000 + discount
         row[sellPriceIndex] = sellPrice
-        total += sellPrice
+        total += unitPrice * 1000
 
-        const supplierCode = matchedSupplier?.supplierCode
-        if (supplierCode && sellPrice) {
-          row[skuIndex] = generateItemCodeAuto(supplierCode, sellPrice)
+        if (percent && supplierCode && sellPrice && productCode) {
+          row[skuIndex] = generateItemCodeAuto(
+            percent,
+            supplierCode,
+            productCode,
+            sellPrice
+          )
         }
       }
 
@@ -391,14 +461,16 @@ export const Test = () => {
     })
 
     const totalRow = new Array(headerRow.length).fill('')
-    totalRow[sellPriceIndex - 1] = 'Tổng tiền'
-    totalRow[sellPriceIndex] = total
+    totalRow[unitPriceIndex - 1] = 'Tổng tiền'
+    totalRow[unitPriceIndex] = total
 
     return [...updatedData, totalRow]
   }
   const productNameIndex = data[0]?.indexOf('Tên hàng hóa')
   const dvtIndex = data[0]?.indexOf('ĐVT')
   const suplierIndex = data[0]?.indexOf('Nhà cung cấp')
+  const percentIndex = data[0]?.indexOf('Phần trăm')
+  const dateIndex = data[0]?.indexOf('Ngày')
 
   return (
     <div className='p-8 h-[100vh] bg-gradient-to-r from-indigo-100 via-blue-100 to-purple-100'>
@@ -512,6 +584,7 @@ export const Test = () => {
             // Header row background color (blueish tone)
             if (row === 0) {
               cellProperties.className = 'custom-cell'
+              cellProperties.readOnly = true
             }
 
             if (highlightedRows.has(row)) {
@@ -523,7 +596,12 @@ export const Test = () => {
               cellProperties.strict = true
               cellProperties.allowInvalid = false
             }
-
+            if (col === percentIndex) {
+              cellProperties.readOnly = true
+            }
+            if (col === dateIndex) {
+              cellProperties.readOnly = true
+            }
             // Dropdown for Unit
             if (col === dvtIndex) {
               cellProperties.type = 'dropdown'
@@ -531,7 +609,6 @@ export const Test = () => {
               cellProperties.strict = true
               cellProperties.allowInvalid = false
             }
-
             // Dropdown for Supplier
             if (col === suplierIndex) {
               cellProperties.type = 'dropdown'

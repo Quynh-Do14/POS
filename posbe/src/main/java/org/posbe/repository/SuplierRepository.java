@@ -9,5 +9,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface SuplierRepository extends JpaRepository<Suplier, Long> {
     Page<Suplier> findAll(Pageable pageable);
+
     Page<Suplier> findByNameContaining(String name, Pageable pageable);
+
+    boolean existsBySupplierCode(String supplierCode);
 }

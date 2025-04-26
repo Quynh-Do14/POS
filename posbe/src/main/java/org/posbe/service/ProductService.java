@@ -40,6 +40,7 @@ public class ProductService {
     public dto ConvertToDto(Product product) {
         return dto.builder()
                 .id(product.getId())
+                .code(product.getCode())
                 .name(product.getName())
                 .unitPrice(product.getUnitPrice())
                 .unit(product.getUnit())
@@ -52,11 +53,15 @@ public class ProductService {
     }
 
     public Product createProduct(Product product) {
+        int count = productRepository.findAll().size();
+        int number = count + 1;
+        product.setCode(setCodeString(number));
         return productRepository.save(product);
     }
 
     public Product updateProduct(Long id, Product productDetails) {
         return productRepository.findById(id).map(product -> {
+            product.setCode(productDetails.getCode());
             product.setName(productDetails.getName());
             product.setUnitPrice(productDetails.getUnitPrice());
             product.setUnit(productDetails.getUnit());
@@ -67,5 +72,17 @@ public class ProductService {
 
     public void deleteProduct(Long id) {
         productRepository.deleteById(id);
+    }
+
+    private String setCodeString(int number) {
+        if (number >= 1 && number <= 9) {
+            return "00" + number;
+        } else if (number >= 10 && number <= 99) {
+            return "0" + number;
+        } else if (number >= 100 && number <= 999) {
+            return String.valueOf(number);
+        } else {
+            return "";
+        }
     }
 }

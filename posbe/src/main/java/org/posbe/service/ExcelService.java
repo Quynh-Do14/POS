@@ -89,10 +89,10 @@ public class ExcelService {
 
         product.setSku(getCellValue(row.getCell(0))); // Mã hàng hóa
         product.setName(getCellValue(row.getCell(1))); // Tên hàng hóa
-        product.setQuantity((int) getNumericCellValue(row.getCell(5), rowIndex, "SL")); // Số lượng
-        product.setUnitPrice(BigDecimal.valueOf(getNumericCellValue(row.getCell(6), rowIndex, "Đơn giá"))); // Đơn giá
-        product.setUnit(getCellValue(row.getCell(7))); // Đơn vị tính (ĐVT)
-        product.setSellPrice(BigDecimal.valueOf(getNumericCellValue(row.getCell(8), rowIndex, "Giá bán"))); // Giá bá
+        product.setQuantity((int) getNumericCellValue(row.getCell(2), rowIndex, "SL")); // Số lượng
+        product.setUnitPrice(BigDecimal.valueOf(getNumericCellValue(row.getCell(3), rowIndex, "Đơn giá"))); // Đơn giá
+        product.setUnit(getCellValue(row.getCell(4))); // Đơn vị tính (ĐVT)
+        product.setSellPrice(BigDecimal.valueOf(getNumericCellValue(row.getCell(5), rowIndex, "Giá bán"))); // Giá bá
         // Lưu các cột bổ sung
         Map<String, Object> extraFields = new HashMap<>();
         for (int colIndex = 0; colIndex < row.getLastCellNum(); colIndex++) {

@@ -7,6 +7,7 @@ import lombok.Data;
 @Builder
 public class dto {
     private Long id;
+    private String code;
     private String name;
     private Double unitPrice;
     private String unit;
